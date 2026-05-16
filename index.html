@@ -398,7 +398,7 @@ const LINKS = {
     
   ],
   policies: [
-    { icon:"📄", name:"First Aid Flowchart", desc:"Updated Jan 2025", url:"https://drive.google.com/file/d/1UieXnnt6QYnmtDvVzw0nulC86laTa9TQ/view?usp=drive_link },
+    { icon:"📄", name:"First Aid Flowchart", desc:"Updated Jan 2025", url:"https://drive.google.com/file/d/1UieXnnt6QYnmtDvVzw0nulC86laTa9TQ/view?usp=drive_link" },
     { icon:"📄", name:"First Aiders", desc:"Updated Jan 2025", url:"https://docs.google.com/document/d/1i-egJFnqsiHLgxh_8GsU3H2C9Vfe0NMZSiD1xsm1u8o/edit?usp=sharing" },
     { icon:"📄", name:"Staff Handbook", desc:"Updated Jan 2025", url:"https://drive.google.com/file/d/1jrOurazsO_URgrCI0Gv1sOVIEotMtCiF/view?usp=drive_link" },
     { icon:"📄", name:"Policies", desc:"Updated Mar 2025", url:"https://drive.google.com/drive/folders/12zj8n6pcNeIjFw1pX8xhQhaf7MIfTqN9" },
@@ -410,8 +410,8 @@ const LINKS = {
     { icon:"📄", name:"Google Groups & Key Contacts", desc:"Important Contacts", url:"https://docs.google.com/document/d/1eWV1Sl93RjMUflEDiUkZ6pMlZpk5TNCgcb77rBTNsgw/edit?usp=sharing" },
     { icon:"📄", name:"PDPA", desc:"PDPA", url:"https://drive.google.com/drive/folders/1pzX8V9KLCA2pHmkPxIrzPZEJAypguDK5?usp=drive_link" },
     { icon:"📄", name:"Taster day Feedback Form", desc:"Feedback for office", url:"https://docs.google.com/document/d/1zqSd1cusKEtIyXdqHu8BN5vzW6-6ofXmNUJydoZ4wqE/edit?tab=t.0" },
-    { icon:"📄", name:"Whole School Schedule", desc:"Dates", url:"https://docs.google.com/document/d/1sJR7KvFydETxC1ytqVixQGKoDnreaBGAb1nrOA_w-Yc/edit?usp=sharing"
-    { icon:"📄", name:"Calendar 25 - 26", desc:"Dates", url:"https://drive.google.com/file/d/1BwV6GF0tmHyvPP-V42UTG5TeyfzHh_8B/view?usp=drive_link"
+    { icon:"📄", name:"Whole School Schedule", desc:"Dates", url:"https://docs.google.com/document/d/1sJR7KvFydETxC1ytqVixQGKoDnreaBGAb1nrOA_w-Yc/edit?usp=sharing" },
+    { icon:"📄", name:"Calendar 25 - 26", desc:"Dates", url:"https://drive.google.com/file/d/1BwV6GF0tmHyvPP-V42UTG5TeyfzHh_8B/view?usp=drive_link" },
   ]
 };
 
@@ -477,7 +477,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('.top-bar h1').textContent = SCHOOL_NAME + ' — Staff Hub';
   renderLinks();
   if (SHEET_URL) {
-    document.getElementById('setup-banner').style.display = 'none';
+    const setupBanner = document.getElementById('setup-banner');
+    if (setupBanner) setupBanner.style.display = 'none';
     loadSheetData();
     setInterval(loadSheetData, 5 * 60 * 1000);
   } else {
@@ -491,33 +492,36 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════
 async function loadSheetData() {
   try {
-    const res = await fetch("https://corsproxy.io/?" + encodeURIComponent(SHEET_URL));
+    const res = await fetch(SHEET_URL + (SHEET_URL.includes('?') ? '&' : '?') + 'cacheBust=' + Date.now());
+    if (!res.ok) throw new Error('Sheet fetch failed: ' + res.status + ' ' + res.statusText);
+
     const text = await res.text();
-    const rows = text.trim().split('\n').slice(1).map(line => {
-      const cols = []; let cur = ''; let inQ = false;
-      for (let c of line) {
-        if (c === '"') { inQ = !inQ; }
-        else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-        else cur += c;
-      }
-      cols.push(cur.trim()); return cols;
-    });
-    const today = new Date().toLocaleDateString('en-GB');
-    const todayEvents = rows.filter(r => r[0] === today);
+    const rows = parseCSV(text);
+
+    // This expects the Events tab CSV, with date in column A.
+    // If no date matches today, it shows all rows with an event title instead of staying on Loading.
+    const todayGB = new Date().toLocaleDateString('en-GB');
+    const todayISO = new Date().toISOString().slice(0, 10);
+
+    let todayEvents = rows.filter(r => normaliseDate(r[0]) === todayGB || normaliseDate(r[0]) === todayISO);
+    if (todayEvents.length === 0) todayEvents = rows.filter(r => r[1]);
+
     if (todayEvents.length > 0) {
       renderSheetEvents(todayEvents);
+      renderFallbackCoverOnly();
+      renderFallbackWeekOnly();
     } else {
       renderFallback();
     }
-    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+
+    document.getElementById('last-updated').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
   } catch(e) {
     console.error(e);
     renderFallback();
     document.getElementById('last-updated').textContent = 'Could not load sheet — showing defaults';
   }
-  
-}
-  function renderSheetCover(rows) {
+}  function renderSheetCover(rows) {
   const coverList = document.getElementById('cover-list');
   coverList.innerHTML = '';
   if (rows.length === 0) {
@@ -568,6 +572,45 @@ function parseCSV(text) {
       else cur += c;
     }
     cols.push(cur.trim()); return cols;
+  });
+}
+
+
+function normaliseDate(value) {
+  if (!value) return '';
+  const v = String(value).trim();
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(v)) {
+    const [d,m,y] = v.split('/');
+    return String(Number(d)).padStart(2,'0') + '/' + String(Number(m)).padStart(2,'0') + '/' + y;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const parsed = new Date(v);
+  if (!isNaN(parsed)) return parsed.toLocaleDateString('en-GB');
+  return v;
+}
+
+function renderFallbackCoverOnly() {
+  const coverList = document.getElementById('cover-list');
+  coverList.innerHTML = '';
+  FALLBACK_COVER.forEach(c => {
+    const initials = c.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    const row = document.createElement('div');
+    row.className = 'cover-row';
+    row.innerHTML = `<div class="cover-avatar">${initials}</div><div><div class="cover-name">${c.name}</div><div class="cover-detail">Cover: ${c.cover}</div></div><div class="cover-badge">Absent</div>`;
+    coverList.appendChild(row);
+  });
+}
+
+function renderFallbackWeekOnly() {
+  const wg = document.getElementById('week-grid');
+  wg.innerHTML = '';
+  document.getElementById('week-label').textContent = FALLBACK_WEEK.label;
+  FALLBACK_WEEK.days.forEach(d => {
+    const col = document.createElement('div');
+    col.className = 'day-col' + (d.isToday ? ' today' : '');
+    col.innerHTML = `<div class="day-name">${d.name}${d.isToday ? ' ← today':''}</div>` +
+      d.events.map(e => `<div class="day-event">${e}</div>`).join('');
+    wg.appendChild(col);
   });
 }
 
