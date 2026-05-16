@@ -364,7 +364,7 @@
 // ═══════════════════════════════════════════════════════════
 
 // Paste your published Google Sheet CSV URL here:
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbyrPawkeY07n1WHBzxYnunLCxdGHC_Y9DkQV8rtzR0iuy4bjIL1wfPVhSwiGSdQzwQ/exec";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS5dZVKpbuISXkpAv_p1-FlLcwfpw1DIdEQdJsU5LXXP2puztM2dZEYYDnD9IvtIhGjeHDISUs1GaKn/pub?output=csv";
 
 // Safeguarding PIN (change this!):
 const CORRECT_PIN = "1234";
@@ -491,36 +491,32 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════
 async function loadSheetData() {
   try {
-    const res = await fetch(SHEET_URL);
-    const data = await res.json();
+    const res = await fetch("https://corsproxy.io/?" + encodeURIComponent(SHEET_URL));
+    const text = await res.text();
+    const rows = text.trim().split('\n').slice(1).map(line => {
+      const cols = []; let cur = ''; let inQ = false;
+      for (let c of line) {
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+        else cur += c;
+      }
+      cols.push(cur.trim()); return cols;
+    });
     const today = new Date().toLocaleDateString('en-GB');
-
-    const todayEvents = (data.Events || []).slice(1).filter(r => r[0] === today);
-    const todayCover = (data.Cover || []).slice(1).filter(r => r[0] === today);
-    const weekEvents = (data.WeekEvents || []).slice(1);
-
+    const todayEvents = rows.filter(r => r[0] === today);
     if (todayEvents.length > 0) {
       renderSheetEvents(todayEvents);
     } else {
       renderFallback();
     }
-
-    if (todayCover.length > 0) {
-      renderSheetCover(todayCover);
-    } else {
-      document.getElementById('cover-list').innerHTML = '<div class="sheet-status">No cover arrangements today.</div>';
-    }
-
-    renderSheetWeek(weekEvents);
     document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
-
   } catch(e) {
     console.error(e);
     renderFallback();
     document.getElementById('last-updated').textContent = 'Could not load sheet — showing defaults';
   }
+  
 }
-
   function renderSheetCover(rows) {
   const coverList = document.getElementById('cover-list');
   coverList.innerHTML = '';
