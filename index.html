@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Riverside Academy — Staff Hub</title>
+<title>Future Steps International School Bangkok — Staff Hub</title>
 <style>
   /* ── RESET & BASE ── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -179,14 +179,6 @@
 <body>
 
 <div class="hub">
-
-  <!-- ═══════════════════════════════════════════════════════
-       SETUP BANNER — remove this block once Sheet is connected
-  ════════════════════════════════════════════════════════════ -->
-  <div class="setup-banner" id="setup-banner">
-    <strong>Setup required:</strong> To connect your Google Sheet, open this file in a text editor, find the line that says <code>const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVaXuWlq4A74-H3cE49eqcLDgWUH9C1R1bj55n2xOA78i2NO4x76oanvtxzH1ekA/pub?output=csv"</code> near the top of the &lt;script&gt;, and paste your published Sheet URL between the quotes. Then save and reload.
-    See the included <strong>SETUP GUIDE</strong> below the hub for full instructions.
-  </div>
 
   <!-- TOP BAR -->
   <div class="top-bar">
@@ -364,60 +356,19 @@
   </div>
 </div>
 
-
-<!-- ═══════════════════════════════════════════════════════
-     SETUP GUIDE (visible below the hub in a browser)
-     The principal / admin reads this once then it can be deleted
-════════════════════════════════════════════════════════════ -->
-<div style="max-width:960px;margin:2rem auto;padding:1rem;">
-  <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:1.5rem;font-size:13px;color:#334155;line-height:1.8;">
-    <h2 style="font-size:16px;font-weight:700;margin-bottom:1rem;color:#1a1a1a;">📋 Setup guide — read once then delete this section</h2>
-
-    <p style="margin-bottom:1rem;"><strong>Step 1 — Make a copy of the Google Sheet template</strong><br>
-    Go to <a href="https://sheets.google.com" style="color:#1a3a5c;">sheets.google.com</a> and create a new spreadsheet. Rename it "Riverside Hub Data". It needs these sheets (tabs at the bottom):</p>
-
-    <ul style="margin-left:1.5rem;margin-bottom:1rem;">
-      <li><strong>Events</strong> — columns: Date (DD/MM/YYYY) | Title | Category (urgent/sport/admin/visit/absence/info) | Year group (all/ks1/ks2/secondary/sport) | Summary | Detail 1 label | Detail 1 value | Detail 2 label | Detail 2 value | … up to 8 detail rows | Doc link (optional)</li>
-      <li><strong>Cover</strong> — columns: Date | Staff name | Periods | Cover teacher | Notes</li>
-      <li><strong>WeekEvents</strong> — columns: Date | Day label | Event title</li>
-      <li><strong>SEMH</strong> — columns: Name | Year | Class | Key adult | Key adult ext | Triggers | Strategy | Parent contact | Plan notes | MyConcern link | Photo URL (optional)</li>
-      <li><strong>Allergies</strong> — columns: Name | Year | Class | Allergen | Severity (severe/dietary) | EpiPen location | Symptoms | Note | Parent contact | Photo URL (optional)</li>
-      <li><strong>Social</strong> — columns: Name | Year | Class | Restriction type | Reason | Note | Contact | Photo URL (optional)</li>
-    </ul>
-
-    <p style="margin-bottom:1rem;"><strong>Step 2 — Publish the sheet</strong><br>
-    In Google Sheets: File → Share → Publish to web → select "Entire document" and "CSV" → click Publish → copy the URL shown.</p>
-
-    <p style="margin-bottom:1rem;"><strong>Step 3 — Paste the URL into this file</strong><br>
-    Open this HTML file in Notepad (right-click → Edit / Open with Notepad). Find the line:<br>
-    <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">const SHEET_URL = "";</code><br>
-    Paste your URL between the quotes. Save the file.</p>
-
-    <p style="margin-bottom:1rem;"><strong>Step 4 — Change the PIN</strong><br>
-    Find the line <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">const CORRECT_PIN = "1234";</code> and change 1234 to whatever PIN you want. Save.</p>
-
-    <p style="margin-bottom:1rem;"><strong>Step 5 — Deploy to Netlify (free hosting)</strong><br>
-    Go to <a href="https://netlify.com" style="color:#1a3a5c;">netlify.com</a> → sign up free → drag and drop this HTML file onto the page → your hub is live instantly at a URL like <em>riverside-hub.netlify.app</em>. Staff bookmark that link. Done.</p>
-
-    <p style="margin-bottom:0;"><strong>Daily update workflow (principal)</strong><br>
-    Open the Google Sheet → update the Events tab (add today's rows, delete yesterday's) → update Cover tab → save. The hub refreshes automatically every 5 minutes, or staff can reload the page. No emails needed. No sending. Total time: under 2 minutes.</p>
-  </div>
-</div>
-
-
 <script>
 // ═══════════════════════════════════════════════════════════
 //  CONFIG — edit these values for your school
 // ═══════════════════════════════════════════════════════════
 
 // Paste your published Google Sheet CSV URL here:
-const SHEET_URL = "";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVaXuWlq4A74-H3cE49eqcLDgWUH9C1R1bj55n2xOA78i2NO4x76oanvtxzH1ekA/pub?output=csv";
 
 // Safeguarding PIN (change this!):
 const CORRECT_PIN = "1234";
 
 // School name shown in header:
-const SCHOOL_NAME = "Riverside Academy";
+const SCHOOL_NAME = "Future Steps International School";
 
 // Current term info:
 const TERM_INFO = "Week 3, Summer Term";
@@ -425,26 +376,40 @@ const TERM_INFO = "Week 3, Summer Term";
 // ── STATIC LINKS (edit URLs to your real ones) ──
 const LINKS = {
   systems: [
-    { icon:"📚", name:"iSAMS", desc:"MIS & pupil records", url:"https://your-isams-url.com" },
-    { icon:"❤️", name:"MyConcern", desc:"Safeguarding reports", url:"https://your-myconcern-url.com" },
-    { icon:"🔧", name:"Maintenance", desc:"Log a repair request", url:"https://your-maintenance-form-url.com" },
+    { icon:"📚", name:"iSAMS", desc:"MIS & pupil records", url:"https://fsbinternational.isamshosting.cloud/main/framework" },
+    { icon:"❤️", name:"MyConcern", desc:"Safeguarding reports", url:"https://login.thesafeguardingcompany.com/Identity/Account/Login?ReturnUrl=%2F" },
+    { icon:"🔧", name:"iSAMS & Google requests", desc:"Locked out of iSAMS", url:"https://fsb.fibery.io/@public/forms/CChu9Yri" },
+    { icon:"🔧", name:"Maintenance", desc:"Log a repair request", url:"https://fsb.fibery.io/@public/forms/x4Vcj22u" },
+    { icon:"🔧", name:"Safety concern form", desc:"Health & Safety risks", url:"https://fsb.fibery.io/@public/forms/pQw9WJpC" },
+    { icon:"🔧", name:"Custodial Request Form", desc:"Requests for Nannies", url:"https://fsb.fibery.io/@public/forms/pQw9WJpC" },
+    { icon:"💻", name:"IT Requests", desc:"For all IT requests", url:"https://fsb.fibery.io/@public/forms/pQw9WJpC" },
+    { icon:"💻", name:"Laptop Booking Form", desc:"For booking laptops", url:"https://docs.google.com/spreadsheets/d/1uNDdk7AdcpxcgwBTKCF7UFkY3vEL4GHT/edit?usp=sharing&ouid=107342229862611809446&rtpof=true&sd=true" },
     { icon:"📧", name:"Staff email", desc:"Outlook webmail", url:"https://outlook.office.com" },
     { icon:"📅", name:"Cover calendar", desc:"Whole school schedule", url:"https://your-calendar-url.com" },
     { icon:"📊", name:"Data dashboard", desc:"Pupil progress", url:"https://your-data-url.com" },
+    { icon:"📋", name:"Clipboard", desc:"Pupil progress", url:"https://go.clipboard.app/login?returnUrl=%2Fhome" },
   ],
   emergency: [
-    { icon:"🚨", name:"Emergency", desc:"", number:"999", url:null },
-    { icon:"🩺", name:"First aid", desc:"", number:"Ext. 201", url:null },
-    { icon:"🛡️", name:"DSL on call", desc:"", number:"Ext. 205", url:null },
-    { icon:"🏫", name:"School office", desc:"", number:"Ext. 100", url:null },
+    { icon:"🚨", name:"Emma", desc:"", number:"0875129218", url:null },
+    { icon:"🚨", name:"Fliss", desc:"", number:"0990095281", url:null },
+    { icon:"🩺", name:"Nurse Dolly", desc:"", number:"0655692474", url:null },
+    
   ],
   policies: [
-    { icon:"📄", name:"Behaviour policy", desc:"Updated Jan 2025", url:"https://your-policy-url.com" },
-    { icon:"📄", name:"Safeguarding policy", desc:"Updated Sep 2024", url:"https://your-policy-url.com" },
-    { icon:"📄", name:"Risk assessments", desc:"All current RAs", url:"https://your-ra-url.com" },
-    { icon:"📄", name:"SEND policy", desc:"Updated Mar 2025", url:"https://your-policy-url.com" },
-    { icon:"📄", name:"Health & Safety", desc:"Updated Feb 2025", url:"https://your-policy-url.com" },
-    { icon:"📄", name:"Staff handbook", desc:"2024–25", url:"https://your-handbook-url.com" },
+    { icon:"📄", name:"First Aid Flowchart", desc:"Updated Jan 2025", url:"https://drive.google.com/file/d/1UieXnnt6QYnmtDvVzw0nulC86laTa9TQ/view?usp=drive_link },
+    { icon:"📄", name:"First Aiders", desc:"Updated Jan 2025", url:"https://docs.google.com/document/d/1i-egJFnqsiHLgxh_8GsU3H2C9Vfe0NMZSiD1xsm1u8o/edit?usp=sharing" },
+    { icon:"📄", name:"Staff Handbook", desc:"Updated Jan 2025", url:"https://drive.google.com/file/d/1jrOurazsO_URgrCI0Gv1sOVIEotMtCiF/view?usp=drive_link" },
+    { icon:"📄", name:"Policies", desc:"Updated Mar 2025", url:"https://drive.google.com/drive/folders/12zj8n6pcNeIjFw1pX8xhQhaf7MIfTqN9" },
+    { icon:"📄", name:"Insurance", desc:"Updated Feb 2025", url:"https://drive.google.com/drive/u/0/folders/1yRLXv-B8hcN5O3E8zxaZ9dHsDvZT_o61" },
+    { icon:"📄", name:"Risk Assessments", desc:"For trips", url:"https://drive.google.com/drive/folders/1lSc14gz6z41v9bcgPJuzg-B0HLguf04r?usp=sharing" },
+    { icon:"📄", name:"School Trips", desc:"For trips", url:"https://drive.google.com/drive/folders/1hEpIU9xs2GXc6oWPvC83tVIr7cFA1w2e" },
+    { icon:"📄", name:"Personal Leave Form", desc:"Request to take leave", url:"https://drive.google.com/file/d/1uO64mdC1G60ef-abC9VovyH0EGGLDSmN/view?usp=drive_link" },
+    { icon:"📄", name:"Purchase Form", desc:"Purchasing items", url:"https://drive.google.com/file/d/1_VgNlGE3sVG1e3qvx_-93-2Tx0cDG94j/view?usp=sharing" },
+    { icon:"📄", name:"Google Groups & Key Contacts", desc:"Important Contacts", url:"https://docs.google.com/document/d/1eWV1Sl93RjMUflEDiUkZ6pMlZpk5TNCgcb77rBTNsgw/edit?usp=sharing" },
+    { icon:"📄", name:"PDPA", desc:"PDPA", url:"https://drive.google.com/drive/folders/1pzX8V9KLCA2pHmkPxIrzPZEJAypguDK5?usp=drive_link" },
+    { icon:"📄", name:"Taster day Feedback Form", desc:"Feedback for office", url:"https://docs.google.com/document/d/1zqSd1cusKEtIyXdqHu8BN5vzW6-6ofXmNUJydoZ4wqE/edit?tab=t.0" },
+    { icon:"📄", name:"Whole School Schedule", desc:"Dates", url:"https://docs.google.com/document/d/1sJR7KvFydETxC1ytqVixQGKoDnreaBGAb1nrOA_w-Yc/edit?usp=sharing"
+    { icon:"📄", name:"Calendar 25 - 26", desc:"Dates", url:"https://drive.google.com/file/d/1BwV6GF0tmHyvPP-V42UTG5TeyfzHh_8B/view?usp=drive_link"
   ]
 };
 
