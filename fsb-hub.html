@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riverside Academy — Staff Hub</title>
+<style>
+  /* ── RESET & BASE ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; color: #1a1a1a; }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── LAYOUT ── */
+  .hub { max-width: 960px; margin: 0 auto; padding: 1rem; }
+
+  /* ── TOP BAR ── */
+  .top-bar { background: #1a3a5c; color: white; border-radius: 14px; padding: 1rem 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .top-bar-left { display: flex; align-items: center; gap: 14px; }
+  .top-logo { width: 44px; height: 44px; background: rgba(255,255,255,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .top-bar h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  .top-date { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+  .top-bar-right { text-align: right; font-size: 12px; opacity: 0.75; line-height: 1.9; white-space: nowrap; }
+  .live-dot { display: inline-block; width: 7px; height: 7px; background: #4ade80; border-radius: 50%; margin-right: 5px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── NAV ── */
+  .nav { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .nav button { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 16px; font-size: 13px; color: #64748b; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 7px; font-family: inherit; }
+  .nav button:hover { background: #f8fafc; color: #1a3a5c; border-color: #cbd5e1; }
+  .nav button.active { background: #1a3a5c; color: white; border-color: #1a3a5c; }
+  .nav button svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── SECTIONS ── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── SECTION LABELS ── */
+  .section-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px; margin: 1.25rem 0 8px; }
+
+  /* ── LOADING / ERROR ── */
+  .sheet-status { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem; text-align: center; color: #64748b; font-size: 13px; margin-bottom: 1rem; }
+  .sheet-status.error { border-color: #fca5a5; background: #fff5f5; color: #b91c1c; }
+  .sheet-status.warning { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+
+  /* ── TODAY ── */
+  .today-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px; }
+  .today-header h2 { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+  .filter-bar { display: flex; gap: 5px; flex-wrap: wrap; }
+  .filter-btn { font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; cursor: pointer; color: #64748b; transition: all 0.15s; font-family: inherit; }
+  .filter-btn:hover { border-color: #1a3a5c; color: #1a3a5c; }
+  .filter-btn.active { background: #1a3a5c; color: white; border-color: #1a3a5c; }
+
+  .events-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+  @media (max-width: 600px) { .events-grid { grid-template-columns: 1fr; } }
+
+  .event-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; position: relative; }
+  .event-card:hover { border-color: #94a3b8; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transform: translateY(-1px); }
+  .event-card .chevron { position: absolute; top: 14px; right: 14px; color: #cbd5e1; font-size: 16px; transition: color 0.15s; }
+  .event-card:hover .chevron { color: #64748b; }
+
+  /* card accent colours */
+  .card-urgent  { border-left: 3px solid #dc2626; border-radius: 0 12px 12px 0; }
+  .card-absence { border-left: 3px solid #ea580c; border-radius: 0 12px 12px 0; }
+  .card-sport   { border-left: 3px solid #1a3a5c; border-radius: 0 12px 12px 0; }
+  .card-admin   { border-left: 3px solid #16a34a; border-radius: 0 12px 12px 0; }
+  .card-visit   { border-left: 3px solid #7c3aed; border-radius: 0 12px 12px 0; }
+  .card-info    { border-left: 3px solid #0891b2; border-radius: 0 12px 12px 0; }
+
+  .event-tag { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px; margin-bottom: 6px; font-weight: 600; }
+  .tag-urgent  { background: #fef2f2; color: #dc2626; }
+  .tag-absence { background: #fff7ed; color: #ea580c; }
+  .tag-sport   { background: #eff6ff; color: #1a3a5c; }
+  .tag-admin   { background: #f0fdf4; color: #16a34a; }
+  .tag-visit   { background: #f5f3ff; color: #7c3aed; }
+  .tag-info    { background: #ecfeff; color: #0891b2; }
+
+  .event-title  { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; padding-right: 20px; }
+  .event-detail { font-size: 12px; color: #64748b; line-height: 1.5; }
+
+  /* ── COVER ROWS ── */
+  .cover-row { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.15s; }
+  .cover-row:hover { background: #f8fafc; }
+  .cover-avatar { width: 34px; height: 34px; border-radius: 50%; background: #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #1a3a5c; flex-shrink: 0; }
+  .cover-name   { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+  .cover-detail { font-size: 12px; color: #64748b; }
+  .cover-badge  { margin-left: auto; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: #fff7ed; color: #ea580c; font-weight: 600; flex-shrink: 0; }
+
+  /* ── MODAL ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: white; border-radius: 16px; width: 100%; max-width: 500px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal-head { padding: 1.25rem 1.25rem 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .modal-head h3 { font-size: 16px; font-weight: 600; color: #1a1a1a; line-height: 1.4; }
+  .modal-close { background: #f1f5f9; border: none; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; font-size: 16px; color: #64748b; flex-shrink: 0; display: flex; align-items: center; justify-content: center; line-height: 1; transition: background 0.15s; }
+  .modal-close:hover { background: #e2e8f0; }
+  .modal-body { padding: 1rem 1.25rem 1.5rem; }
+  .modal-tag-row { margin-bottom: 12px; }
+  .modal-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+  .modal-row:last-of-type { border-bottom: none; }
+  .modal-label { color: #94a3b8; min-width: 90px; flex-shrink: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; padding-top: 1px; }
+  .modal-val { color: #1a1a1a; line-height: 1.5; }
+  .modal-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #1a3a5c; font-weight: 600; padding: 8px 14px; border: 1.5px solid #1a3a5c; border-radius: 8px; margin-top: 12px; transition: background 0.15s; }
+  .modal-link:hover { background: #eff6ff; }
+  .alert-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #b91c1c; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+
+  /* ── QUICK LINKS ── */
+  .links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .link-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.15s; display: block; }
+  .link-card:hover { border-color: #94a3b8; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transform: translateY(-1px); }
+  .link-icon { font-size: 26px; margin-bottom: 10px; }
+  .link-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+  .link-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+  .emerg-number { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-top: 4px; }
+
+  /* ── CALENDAR ── */
+  .week-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+  .week-nav button { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 14px; color: #64748b; font-family: inherit; }
+  .week-nav span { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+  .week-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  @media (max-width: 640px) { .week-grid { grid-template-columns: 1fr 1fr; } }
+  .day-col { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; }
+  .day-col.today { border-color: #1a3a5c; }
+  .day-name { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .day-col.today .day-name { color: #1a3a5c; }
+  .day-event { font-size: 12px; color: #1a1a1a; padding: 5px 8px; border-radius: 6px; margin-bottom: 4px; background: #f8fafc; cursor: pointer; transition: background 0.12s; line-height: 1.4; }
+  .day-event:hover { background: #e2e8f0; }
+
+  /* ── SAFEGUARDING ── */
+  .pin-gate { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2.5rem 2rem; text-align: center; max-width: 360px; margin: 2rem auto; }
+  .pin-icon { font-size: 40px; margin-bottom: 1rem; }
+  .pin-gate h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; color: #1a1a1a; }
+  .pin-gate p { font-size: 13px; color: #64748b; margin-bottom: 1.5rem; line-height: 1.6; }
+  .pin-dots { display: flex; gap: 14px; justify-content: center; margin-bottom: 1.5rem; }
+  .pin-dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid #cbd5e1; background: transparent; transition: all 0.15s; }
+  .pin-dot.filled { background: #1a3a5c; border-color: #1a3a5c; }
+  .pin-keypad { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; max-width: 210px; margin: 0 auto; }
+  .pin-key { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 13px; font-size: 19px; cursor: pointer; color: #1a1a1a; transition: all 0.1s; font-family: inherit; }
+  .pin-key:hover { background: #e2e8f0; }
+  .pin-key.small { font-size: 13px; font-weight: 600; }
+  .pin-error { color: #dc2626; font-size: 12px; margin-top: 10px; min-height: 18px; }
+
+  .sg-tabs { display: flex; gap: 6px; margin-bottom: 1rem; }
+  .sg-tab { padding: 7px 16px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; cursor: pointer; font-size: 13px; font-weight: 500; color: #64748b; font-family: inherit; transition: all 0.15s; }
+  .sg-tab.active { background: #1a3a5c; color: white; border-color: #1a3a5c; }
+  .sg-content { display: none; }
+  .sg-content.active { display: block; }
+
+  .sg-notice { font-size: 12px; color: #64748b; margin-bottom: 10px; padding: 10px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; line-height: 1.5; }
+
+  .child-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+  .child-card:hover { border-color: #94a3b8; background: #f8fafc; }
+  .child-photo { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0; flex-shrink: 0; }
+  .child-initials { width: 50px; height: 50px; border-radius: 50%; background: #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #1a3a5c; flex-shrink: 0; }
+  .child-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+  .child-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+  .child-badge { margin-left: auto; font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 600; flex-shrink: 0; white-space: nowrap; }
+  .badge-semh   { background: #fef2f2; color: #dc2626; }
+  .badge-severe { background: #dc2626; color: white; }
+  .badge-diet   { background: #fff7ed; color: #ea580c; }
+  .badge-social { background: #f5f3ff; color: #7c3aed; }
+  .badge-photo  { background: #faf5ff; color: #9333ea; }
+
+  .sg-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .sg-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+  .lock-btn { font-size: 12px; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 5px; background: none; border: 1px solid #e2e8f0; border-radius: 8px; padding: 5px 10px; font-family: inherit; transition: all 0.15s; }
+  .lock-btn:hover { background: #f1f5f9; }
+
+  .hidden { display: none !important; }
+
+  /* ── SETUP BANNER ── */
+  .setup-banner { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #92400e; margin-bottom: 1rem; line-height: 1.6; }
+  .setup-banner strong { font-weight: 700; }
+  .setup-banner code { background: #fef3c7; padding: 1px 5px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+
+  /* ── PRINT ── */
+  @media print { .nav, .filter-bar, .modal-overlay { display: none; } .section { display: block !important; } }
+</style>
+</head>
+<body>
+
+<div class="hub">
+
+  <!-- ═══════════════════════════════════════════════════════
+       SETUP BANNER — remove this block once Sheet is connected
+  ════════════════════════════════════════════════════════════ -->
+  <div class="setup-banner" id="setup-banner">
+    <strong>Setup required:</strong> To connect your Google Sheet, open this file in a text editor, find the line that says <code>const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVaXuWlq4A74-H3cE49eqcLDgWUH9C1R1bj55n2xOA78i2NO4x76oanvtxzH1ekA/pub?output=csv"</code> near the top of the &lt;script&gt;, and paste your published Sheet URL between the quotes. Then save and reload.
+    See the included <strong>SETUP GUIDE</strong> below the hub for full instructions.
+  </div>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="top-logo">🏫</div>
+      <div>
+        <div class="top-date" id="hub-date"></div>
+        <h1>Riverside Academy — Staff Hub</h1>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <div><span class="live-dot"></span>Live</div>
+      <div id="last-updated">Loading...</div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav" aria-label="Hub sections">
+    <button class="active" onclick="showSection('today',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Today
+    </button>
+    <button onclick="showSection('links',this)">
+      <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Quick links
+    </button>
+    <button onclick="showSection('calendar',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/></svg>
+      This week
+    </button>
+    <button onclick="showSection('safeguarding',this)">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Safeguarding
+    </button>
+  </nav>
+
+  <!-- ═══════════ TODAY ═══════════ -->
+  <div class="section active" id="section-today">
+    <div class="today-header">
+      <h2>What's happening today</h2>
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterEvents('all',this)">All staff</button>
+        <button class="filter-btn" onclick="filterEvents('ks1',this)">KS1</button>
+        <button class="filter-btn" onclick="filterEvents('ks2',this)">KS2</button>
+        <button class="filter-btn" onclick="filterEvents('secondary',this)">Secondary</button>
+        <button class="filter-btn" onclick="filterEvents('sport',this)">PE / Sport</button>
+      </div>
+    </div>
+
+    <!-- Dynamic events from Sheet -->
+    <div class="events-grid" id="events-grid">
+      <div class="sheet-status" id="events-loading" style="grid-column:1/-1;">
+        Loading today's events from the school hub sheet…
+      </div>
+    </div>
+
+    <!-- Static fallback events shown when no sheet connected -->
+    <div id="static-events" class="hidden">
+      <!-- injected by JS if no sheet -->
+    </div>
+
+    <div class="section-label">Staff cover today</div>
+    <div id="cover-list">
+      <div class="sheet-status" id="cover-loading">Loading cover information…</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ QUICK LINKS ═══════════ -->
+  <div class="section" id="section-links">
+
+    <div class="section-label">Systems & platforms</div>
+    <div class="links-grid" id="links-systems">
+      <!-- Populated from LINKS data below — edit the JS CONFIG section -->
+    </div>
+
+    <div class="section-label">Emergency contacts</div>
+    <div class="links-grid" id="links-emergency"></div>
+
+    <div class="section-label">Policies & documents</div>
+    <div class="links-grid" id="links-policies"></div>
+
+  </div>
+
+  <!-- ═══════════ THIS WEEK ═══════════ -->
+  <div class="section" id="section-calendar">
+    <div class="week-nav">
+      <button onclick="changeWeek(-1)">&#8592;</button>
+      <span id="week-label">Loading…</span>
+      <button onclick="changeWeek(1)">&#8594;</button>
+    </div>
+    <div class="week-grid" id="week-grid">
+      <div class="sheet-status" style="grid-column:1/-1;">Loading weekly events…</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SAFEGUARDING ═══════════ -->
+  <div class="section" id="section-safeguarding">
+
+    <div id="pin-gate-wrapper">
+      <div class="pin-gate">
+        <div class="pin-icon">🛡️</div>
+        <h3>Safeguarding area</h3>
+        <p>This section is restricted to authorised staff only. Enter your 4-digit PIN to continue.</p>
+        <div class="pin-dots">
+          <div class="pin-dot" id="d0"></div>
+          <div class="pin-dot" id="d1"></div>
+          <div class="pin-dot" id="d2"></div>
+          <div class="pin-dot" id="d3"></div>
+        </div>
+        <div class="pin-keypad">
+          <button class="pin-key" onclick="enterPin(1)">1</button>
+          <button class="pin-key" onclick="enterPin(2)">2</button>
+          <button class="pin-key" onclick="enterPin(3)">3</button>
+          <button class="pin-key" onclick="enterPin(4)">4</button>
+          <button class="pin-key" onclick="enterPin(5)">5</button>
+          <button class="pin-key" onclick="enterPin(6)">6</button>
+          <button class="pin-key" onclick="enterPin(7)">7</button>
+          <button class="pin-key" onclick="enterPin(8)">8</button>
+          <button class="pin-key" onclick="enterPin(9)">9</button>
+          <button class="pin-key small" onclick="clearPin()">Clear</button>
+          <button class="pin-key" onclick="enterPin(0)">0</button>
+          <button class="pin-key small" onclick="backspacePin()">⌫</button>
+        </div>
+        <div class="pin-error" id="pin-error"></div>
+      </div>
+    </div>
+
+    <div id="sg-content-wrapper" class="hidden">
+      <div class="sg-header-row">
+        <span class="sg-title">🛡️ Safeguarding — restricted access</span>
+        <button class="lock-btn" onclick="lockSafeguarding()">🔒 Lock</button>
+      </div>
+      <div class="sg-tabs">
+        <button class="sg-tab active" onclick="showSgTab('semh',this)">SEMH</button>
+        <button class="sg-tab" onclick="showSgTab('allergies',this)">Allergies</button>
+        <button class="sg-tab" onclick="showSgTab('social',this)">Social media</button>
+      </div>
+
+      <!-- SEMH -->
+      <div class="sg-content active" id="sg-semh">
+        <div class="sg-notice">⚠️ Social, emotional & mental health records. Handle with care — do not discuss in open areas. Tap a pupil for full support information.</div>
+        <div id="semh-list"></div>
+      </div>
+
+      <!-- Allergies -->
+      <div class="sg-content" id="sg-allergies">
+        <div class="sg-notice">⚠️ Ensure all supply staff and visitors are made aware before supervising these pupils. Tap a pupil for their full allergy action plan.</div>
+        <div id="allergy-list"></div>
+        <div style="margin-top:10px;">
+          <a href="YOUR_ALLERGY_REGISTER_LINK_HERE" target="_blank" class="modal-link">📋 View full allergy register</a>
+        </div>
+      </div>
+
+      <!-- Social media -->
+      <div class="sg-content" id="sg-social">
+        <div class="sg-notice">🚫 These pupils must not appear on any school social media, website, or photography. Tap for full restriction details.</div>
+        <div id="social-list"></div>
+        <div style="margin-top:10px;">
+          <a href="YOUR_SOCIAL_MEDIA_LIST_LINK_HERE" target="_blank" class="modal-link">📋 View full restriction list</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /hub -->
+
+<!-- ═══════════ MODAL ═══════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="modal-title"></h3>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SETUP GUIDE (visible below the hub in a browser)
+     The principal / admin reads this once then it can be deleted
+════════════════════════════════════════════════════════════ -->
+<div style="max-width:960px;margin:2rem auto;padding:1rem;">
+  <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:1.5rem;font-size:13px;color:#334155;line-height:1.8;">
+    <h2 style="font-size:16px;font-weight:700;margin-bottom:1rem;color:#1a1a1a;">📋 Setup guide — read once then delete this section</h2>
+
+    <p style="margin-bottom:1rem;"><strong>Step 1 — Make a copy of the Google Sheet template</strong><br>
+    Go to <a href="https://sheets.google.com" style="color:#1a3a5c;">sheets.google.com</a> and create a new spreadsheet. Rename it "Riverside Hub Data". It needs these sheets (tabs at the bottom):</p>
+
+    <ul style="margin-left:1.5rem;margin-bottom:1rem;">
+      <li><strong>Events</strong> — columns: Date (DD/MM/YYYY) | Title | Category (urgent/sport/admin/visit/absence/info) | Year group (all/ks1/ks2/secondary/sport) | Summary | Detail 1 label | Detail 1 value | Detail 2 label | Detail 2 value | … up to 8 detail rows | Doc link (optional)</li>
+      <li><strong>Cover</strong> — columns: Date | Staff name | Periods | Cover teacher | Notes</li>
+      <li><strong>WeekEvents</strong> — columns: Date | Day label | Event title</li>
+      <li><strong>SEMH</strong> — columns: Name | Year | Class | Key adult | Key adult ext | Triggers | Strategy | Parent contact | Plan notes | MyConcern link | Photo URL (optional)</li>
+      <li><strong>Allergies</strong> — columns: Name | Year | Class | Allergen | Severity (severe/dietary) | EpiPen location | Symptoms | Note | Parent contact | Photo URL (optional)</li>
+      <li><strong>Social</strong> — columns: Name | Year | Class | Restriction type | Reason | Note | Contact | Photo URL (optional)</li>
+    </ul>
+
+    <p style="margin-bottom:1rem;"><strong>Step 2 — Publish the sheet</strong><br>
+    In Google Sheets: File → Share → Publish to web → select "Entire document" and "CSV" → click Publish → copy the URL shown.</p>
+
+    <p style="margin-bottom:1rem;"><strong>Step 3 — Paste the URL into this file</strong><br>
+    Open this HTML file in Notepad (right-click → Edit / Open with Notepad). Find the line:<br>
+    <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">const SHEET_URL = "";</code><br>
+    Paste your URL between the quotes. Save the file.</p>
+
+    <p style="margin-bottom:1rem;"><strong>Step 4 — Change the PIN</strong><br>
+    Find the line <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">const CORRECT_PIN = "1234";</code> and change 1234 to whatever PIN you want. Save.</p>
+
+    <p style="margin-bottom:1rem;"><strong>Step 5 — Deploy to Netlify (free hosting)</strong><br>
+    Go to <a href="https://netlify.com" style="color:#1a3a5c;">netlify.com</a> → sign up free → drag and drop this HTML file onto the page → your hub is live instantly at a URL like <em>riverside-hub.netlify.app</em>. Staff bookmark that link. Done.</p>
+
+    <p style="margin-bottom:0;"><strong>Daily update workflow (principal)</strong><br>
+    Open the Google Sheet → update the Events tab (add today's rows, delete yesterday's) → update Cover tab → save. The hub refreshes automatically every 5 minutes, or staff can reload the page. No emails needed. No sending. Total time: under 2 minutes.</p>
+  </div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG — edit these values for your school
+// ═══════════════════════════════════════════════════════════
+
+// Paste your published Google Sheet CSV URL here:
+const SHEET_URL = "";
+
+// Safeguarding PIN (change this!):
+const CORRECT_PIN = "1234";
+
+// School name shown in header:
+const SCHOOL_NAME = "Riverside Academy";
+
+// Current term info:
+const TERM_INFO = "Week 3, Summer Term";
+
+// ── STATIC LINKS (edit URLs to your real ones) ──
+const LINKS = {
+  systems: [
+    { icon:"📚", name:"iSAMS", desc:"MIS & pupil records", url:"https://your-isams-url.com" },
+    { icon:"❤️", name:"MyConcern", desc:"Safeguarding reports", url:"https://your-myconcern-url.com" },
+    { icon:"🔧", name:"Maintenance", desc:"Log a repair request", url:"https://your-maintenance-form-url.com" },
+    { icon:"📧", name:"Staff email", desc:"Outlook webmail", url:"https://outlook.office.com" },
+    { icon:"📅", name:"Cover calendar", desc:"Whole school schedule", url:"https://your-calendar-url.com" },
+    { icon:"📊", name:"Data dashboard", desc:"Pupil progress", url:"https://your-data-url.com" },
+  ],
+  emergency: [
+    { icon:"🚨", name:"Emergency", desc:"", number:"999", url:null },
+    { icon:"🩺", name:"First aid", desc:"", number:"Ext. 201", url:null },
+    { icon:"🛡️", name:"DSL on call", desc:"", number:"Ext. 205", url:null },
+    { icon:"🏫", name:"School office", desc:"", number:"Ext. 100", url:null },
+  ],
+  policies: [
+    { icon:"📄", name:"Behaviour policy", desc:"Updated Jan 2025", url:"https://your-policy-url.com" },
+    { icon:"📄", name:"Safeguarding policy", desc:"Updated Sep 2024", url:"https://your-policy-url.com" },
+    { icon:"📄", name:"Risk assessments", desc:"All current RAs", url:"https://your-ra-url.com" },
+    { icon:"📄", name:"SEND policy", desc:"Updated Mar 2025", url:"https://your-policy-url.com" },
+    { icon:"📄", name:"Health & Safety", desc:"Updated Feb 2025", url:"https://your-policy-url.com" },
+    { icon:"📄", name:"Staff handbook", desc:"2024–25", url:"https://your-handbook-url.com" },
+  ]
+};
+
+// ── STATIC FALLBACK DATA (shown if no Sheet connected) ──
+// This is what was in the original slides — update these to match your school
+const FALLBACK_EVENTS = [
+  { title:"Scheduled fire drill — 10:15am", tag:"urgent", tagLabel:"Fire drill", group:"all", summary:"All classes exit via usual routes. Mrs Patel coordinating. Approx. 8 mins.",
+    details:[["Coordinator","Mrs Patel — ext. 105"],["Duration","Approx. 8 minutes"],["Exit routes","All classes via usual fire exit routes"],["Assembly","Designated zones on the field"],["Register","Roll call within 3 mins of reaching zone"]], link:null },
+  { title:"Football vs St John's — 3:30pm", tag:"sport", tagLabel:"Fixture", group:"secondary sport", summary:"Away. Yrs 9 & 10. Coach departs 2:45pm from main gate.",
+    details:[["Kick-off","3:30pm at St John's School"],["Years","9 & 10 — selected squad"],["Lead","Mr Okafor · Miss Tan (first aid)"],["Coach","Departs 2:45pm — pupils excused from P5 at 2:30pm"],["Returns","Est. 5:30pm"]], link:"#" },
+  { title:"Individual photos — all day", tag:"admin", tagLabel:"School photos", group:"ks1 ks2 all", summary:"Photographer in Main Hall. See noticeboard for your class time.",
+    details:[["Photographer","Whitmore Photography"],["Location","Main Hall — corridor B"],["9:00am","Reception & Year 1"],["10:30am","Year 2 & Year 3"],["11:30am","Year 4 & Year 5"],["1:30pm","Year 6 & Year 7"],["2:30pm","Years 8, 9 & 10"]], link:"#" },
+  { title:"Year 6 taster — 14 pupils", tag:"visit", tagLabel:"Taster day", group:"secondary all", summary:"Arriving 9:30am. Mrs Hewitt leading. Joining Yr 7 classes P3 & P4.",
+    details:[["Lead","Mrs Hewitt — ext. 210"],["Arrival","9:30am main reception"],["Period 3","English with 7A (Mrs Brooks, Rm 14)"],["Period 4","Science with 7A (Mr Crane, Rm 22)"],["Departure","2:15pm — parents collecting"]], link:null },
+  { title:"New pupil — Amara Diallo", tag:"admin", tagLabel:"New start", group:"ks1 all", summary:"Starting in 2B today. Mrs Clarke to collect from reception at 8:45am.",
+    details:[["Class","2B — Mrs Clarke"],["Collection","Reception 8:45am"],["Buddy","Jaylen Morris"],["Lunch","Packed lunch today"]], link:null },
+  { title:"2 staff absent today", tag:"absence", tagLabel:"Staff absence", group:"all", summary:"See cover arrangements below.",
+    details:[["Mr J. Mathews","Absent — illness"],["P1–P3 cover","Mrs Holt (Room 8)"],["P4–P5 cover","Mr Singh (Room 8)"],["Miss S. Prentice","Absent — personal leave"],["All day cover","Supply: Ms Bhatia (Room 12)"]], link:null },
+];
+
+const FALLBACK_COVER = [
+  { name:"Mr J. Mathews", periods:"All day", cover:"Mrs Holt (P1–3), Mr Singh (P4–5)" },
+  { name:"Miss S. Prentice", periods:"All day", cover:"Supply: Ms Bhatia" },
+];
+
+const FALLBACK_WEEK = {
+  label: "Week 3 — 12–16 May 2025",
+  days: [
+    { name:"Mon 12", events:["Year 7 trip — Science museum","Staff CPD — 4pm"], isToday:false },
+    { name:"Tue 13", events:["Governors visit","Swimming — Yr 4"], isToday:false },
+    { name:"Wed 14", events:["📷 School photos","Fire drill 10:15","Football vs St John's","Taster day Yr 6"], isToday:true },
+    { name:"Thu 15", events:["Parents evening","Netball fixture — home"], isToday:false },
+    { name:"Fri 16", events:["Staff briefing 8:15am","End of week reports due"], isToday:false },
+  ]
+};
+
+// ── STATIC SAFEGUARDING DATA ──
+// In a real deployment, this would come from a private, access-controlled source.
+// For now, fill in below. This data is only visible after PIN entry.
+const SG_DATA = {
+  semh: [
+    { name:"Liam Barker", year:"Year 4", cls:"4C", keyAdult:"Mrs Clarke", ext:"203", triggers:"Loud noise, unstructured time", strategy:"Move to quiet corner, offer fidget tool, do not draw attention publicly", parent:"Mum: 07700 900123", plan:"SEMH support plan on file — review due July", concern:"#", photo:"https://api.dicebear.com/7.x/thumbs/svg?seed=liam&backgroundColor=b6e3f4" },
+    { name:"Ella Hughes", year:"Year 7", cls:"7A", keyAdult:"Mr Singh", ext:"207", triggers:"Exams and unexpected transitions", strategy:"Pre-warn of changes, offer 5-min pass, check in at tutor time", parent:"Mum: 07700 900456", plan:"On SEMH register — review in progress", concern:"#", photo:"https://api.dicebear.com/7.x/thumbs/svg?seed=ella&backgroundColor=ffdfbf" },
+    { name:"Ryan Nwosu", year:"Year 2", cls:"2B", keyAdult:"Mrs Patel", ext:"201", triggers:"Changes to routine, transitions", strategy:"Consistent responses, warn of changes in advance, 1:1 check-in at day start", parent:"Foster carer: Mrs Allen — 07700 900789", plan:"Attachment support plan on file", concern:"#", photo:"https://api.dicebear.com/7.x/thumbs/svg?seed=ryan&backgroundColor=c0aede" },
+  ],
+  allergies: [
+    { name:"Sophie Chen", year:"Year 5", cls:"5A", allergen:"Tree nuts & peanuts", severity:"severe", epipen:"Office drawer A · Classroom emergency bag", symptoms:"Hives, swelling, breathing difficulty", note:"Do not allow nuts in the same area at lunch", parent:"Mum: 07700 900321 (always reachable)", photo:"https://api.dicebear.com/7.x/thumbs/svg?seed=sophie&backgroundColor=ffd5dc" },
+    { name:"James Abbott", year:"Year 9", cls:"9C", allergen:"Dairy (lactose) · Gluten (coeliac)", severity:"dietary", epipen:"N/A", symptoms:"Digestive discomfort", note:"Kitchen aware — orders from dedicated menu. Packed lunch on trips.", parent:"Dad: 07700 900654", photo:"https://api.dicebear.com/7.x/thumbs/svg?seed=james&backgroundColor=d1f4e0" },
+    { name:"Maya Obi", year:"Year 1", cls:"1A", allergen:"Bee & wasp stings", severity:"severe", epipen:"Office drawer A · Maya's bag on outdoor trips", symptoms:"Anaphylaxis", note:"Extra vigilance on all outdoor activities and trips", parent:"Mum: 07700 900987", photo:"https://api.dicebear.com/7.x/thumbs/svg?seed=maya&backgroundColor=ffd5dc" },
+  ],
+  social: [
+    { name:"Tyler Davis", year:"Year 6", cls:"6B", restriction:"No photography · No social media · No website", reason:"Court order in place — do not discuss with other pupils", note:"Must be excluded from all group photos", contact:"DSL if unsure — ext. 205", photo:"https://api.dicebear.com/7.x/thumbs/svg?seed=tyler&backgroundColor=b6e3f4" },
+    { name:"Amara Ismail", year:"Year 3", cls:"3A", restriction:"No photography only", reason:"Parental request", note:"Social media posts without images are fine. Exclude or crop from group photos.", contact:"School office if unsure", photo:"https://api.dicebear.com/7.x/thumbs/svg?seed=amara&backgroundColor=ffdfbf" },
+  ]
+};
+
+
+// ═══════════════════════════════════════════════════════════
+//  INITIALISE
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('hub-date').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.querySelector('.top-bar h1').textContent = SCHOOL_NAME + ' — Staff Hub';
+  renderLinks();
+  if (SHEET_URL) {
+    document.getElementById('setup-banner').style.display = 'none';
+    loadSheetData();
+    setInterval(loadSheetData, 5 * 60 * 1000);
+  } else {
+    renderFallback();
+  }
+  renderSafeguarding();
+});
+
+// ═══════════════════════════════════════════════════════════
+//  GOOGLE SHEET LOADING
+// ═══════════════════════════════════════════════════════════
+async function loadSheetData() {
+  try {
+    const today = new Date().toLocaleDateString('en-GB');
+    const res = await fetch(SHEET_URL);
+    const csv = await res.text();
+    const rows = parseCSV(csv);
+    // Filter to today's rows; column 0 = date
+    const todayRows = rows.filter(r => r[0] === today);
+    if (todayRows.length === 0) {
+      renderFallback();
+      document.getElementById('last-updated').textContent = 'Sheet connected · No events today';
+    } else {
+      renderSheetEvents(todayRows);
+      document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+    }
+  } catch(e) {
+    renderFallback();
+    document.getElementById('last-updated').textContent = 'Sheet unavailable — showing defaults';
+  }
+}
+
+function parseCSV(text) {
+  return text.trim().split('\n').slice(1).map(line => {
+    const cols = []; let cur = ''; let inQ = false;
+    for (let c of line) {
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cols.push(cur.trim()); return cols;
+  });
+}
+
+function renderSheetEvents(rows) {
+  const grid = document.getElementById('events-grid');
+  grid.innerHTML = '';
+  rows.forEach((r, i) => {
+    // r[1]=Title r[2]=Category r[3]=YearGroup r[4]=Summary r[5..]=detail pairs
+    const details = [];
+    for (let d = 5; d < r.length - 1; d += 2) {
+      if (r[d]) details.push([r[d], r[d+1] || '']);
+    }
+    const docLink = r[r.length - 1] && r[r.length-1].startsWith('http') ? r[r.length-1] : null;
+    const ev = { title:r[1], tag:r[2]||'info', tagLabel:r[2], group:r[3]||'all', summary:r[4], details, link:docLink };
+    grid.appendChild(makeEventCard(ev, i));
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER HELPERS
+// ═══════════════════════════════════════════════════════════
+function renderFallback() {
+  const grid = document.getElementById('events-grid');
+  grid.innerHTML = '';
+  FALLBACK_EVENTS.forEach((ev, i) => grid.appendChild(makeEventCard(ev, i)));
+
+  const coverList = document.getElementById('cover-list');
+  coverList.innerHTML = '';
+  FALLBACK_COVER.forEach(c => {
+    const initials = c.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    const row = document.createElement('div');
+    row.className = 'cover-row';
+    row.innerHTML = `<div class="cover-avatar">${initials}</div><div><div class="cover-name">${c.name}</div><div class="cover-detail">Cover: ${c.cover}</div></div><div class="cover-badge">Absent</div>`;
+    coverList.appendChild(row);
+  });
+
+  const wg = document.getElementById('week-grid');
+  wg.innerHTML = '';
+  document.getElementById('week-label').textContent = FALLBACK_WEEK.label;
+  FALLBACK_WEEK.days.forEach(d => {
+    const col = document.createElement('div');
+    col.className = 'day-col' + (d.isToday ? ' today' : '');
+    col.innerHTML = `<div class="day-name">${d.name}${d.isToday ? ' ← today':''}</div>` +
+      d.events.map(e => `<div class="day-event">${e}</div>`).join('');
+    wg.appendChild(col);
+  });
+
+  document.getElementById('last-updated').textContent = TERM_INFO + ' · Demo data';
+}
+
+function makeEventCard(ev, i) {
+  const tagClass = 'tag-' + ev.tag;
+  const cardClass = 'card-' + ev.tag;
+  const div = document.createElement('div');
+  div.className = `event-card ${cardClass}`;
+  div.dataset.tags = ev.group || 'all';
+  div.innerHTML = `
+    <span class="chevron">›</span>
+    <span class="event-tag ${tagClass}">${capitalise(ev.tagLabel || ev.tag)}</span>
+    <div class="event-title">${ev.title}</div>
+    <div class="event-detail">${ev.summary}</div>`;
+  div.onclick = () => openEventModal(ev);
+  return div;
+}
+
+function capitalise(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+function renderLinks() {
+  renderLinkGroup('links-systems', LINKS.systems, false);
+  renderLinkGroup('links-emergency', LINKS.emergency, true);
+  renderLinkGroup('links-policies', LINKS.policies, false);
+}
+
+function renderLinkGroup(id, items, isEmerg) {
+  const grid = document.getElementById(id);
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const a = document.createElement(item.url ? 'a' : 'div');
+    a.className = 'link-card';
+    if (item.url) { a.href = item.url; a.target = '_blank'; }
+    a.innerHTML = `<div class="link-icon">${item.icon}</div><div class="link-name">${item.name}</div>` +
+      (isEmerg && item.number ? `<div class="emerg-number">${item.number}</div>` : `<div class="link-desc">${item.desc}</div>`);
+    grid.appendChild(a);
+  });
+}
+
+function renderSafeguarding() {
+  // SEMH
+  const semhList = document.getElementById('semh-list');
+  SG_DATA.semh.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'child-card';
+    card.innerHTML = `${photoOrInitials(p.name, p.photo)}<div><div class="child-name">${p.name}</div><div class="child-meta">${p.year} · ${p.cls} · Key adult: ${p.keyAdult}</div></div><span class="child-badge badge-semh">SEMH</span>`;
+    card.onclick = () => openSemhModal(p);
+    semhList.appendChild(card);
+  });
+
+  // Allergies
+  const allergyList = document.getElementById('allergy-list');
+  SG_DATA.allergies.forEach(p => {
+    const isSevere = p.severity === 'severe';
+    const card = document.createElement('div');
+    card.className = 'child-card';
+    card.innerHTML = `${photoOrInitials(p.name, p.photo)}<div><div class="child-name">${p.name}</div><div class="child-meta">${p.year} · ${p.allergen}</div></div><span class="child-badge ${isSevere ? 'badge-severe':'badge-diet'}">${isSevere ? 'Severe':'Dietary'}</span>`;
+    card.onclick = () => openAllergyModal(p);
+    allergyList.appendChild(card);
+  });
+
+  // Social
+  const socialList = document.getElementById('social-list');
+  SG_DATA.social.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'child-card';
+    card.innerHTML = `${photoOrInitials(p.name, p.photo)}<div><div class="child-name">${p.name}</div><div class="child-meta">${p.year} · ${p.restriction}</div></div><span class="child-badge badge-social">Restricted</span>`;
+    card.onclick = () => openSocialModal(p);
+    socialList.appendChild(card);
+  });
+}
+
+function photoOrInitials(name, photoUrl) {
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2);
+  if (photoUrl) return `<img src="${photoUrl}" class="child-photo" alt="${name}">`;
+  return `<div class="child-initials">${initials}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════════════════════
+function openEventModal(ev) {
+  document.getElementById('modal-title').textContent = ev.title;
+  let html = `<div class="modal-tag-row"><span class="event-tag tag-${ev.tag}">${capitalise(ev.tagLabel || ev.tag)}</span></div>`;
+  (ev.details || []).forEach(([label, val]) => {
+    if (!label && !val) { html += `<div style="height:6px;"></div>`; return; }
+    html += `<div class="modal-row"><span class="modal-label">${label}</span><span class="modal-val">${val}</span></div>`;
+  });
+  if (ev.link) html += `<a href="${ev.link}" target="_blank" class="modal-link">📄 View full document</a>`;
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openSemhModal(p) {
+  document.getElementById('modal-title').textContent = p.name;
+  let html = `<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">${photoOrInitials(p.name, p.photo)}<div><div style="font-size:15px;font-weight:600;">${p.name}</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${p.year} · ${p.cls}</div><span class="child-badge badge-semh" style="display:inline-block;margin-top:6px;margin-left:0;">SEMH</span></div></div>`;
+  const rows = [["Key adult", p.keyAdult + " (ext. " + p.ext + ")"], ["Triggers", p.triggers], ["Strategy", p.strategy], ["Parent/carer", p.parent], ["Support plan", p.plan]];
+  rows.forEach(([l,v]) => { html += `<div class="modal-row"><span class="modal-label">${l}</span><span class="modal-val">${v}</span></div>`; });
+  if (p.concern) html += `<a href="${p.concern}" target="_blank" class="modal-link">❤️ Open MyConcern record</a>`;
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openAllergyModal(p) {
+  const isSevere = p.severity === 'severe';
+  document.getElementById('modal-title').textContent = p.name;
+  let html = `<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">${photoOrInitials(p.name, p.photo)}<div><div style="font-size:15px;font-weight:600;">${p.name}</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${p.year} · ${p.cls}</div><span class="child-badge ${isSevere?'badge-severe':'badge-diet'}" style="display:inline-block;margin-top:6px;margin-left:0;">${isSevere?'Severe allergy':'Dietary'}</span></div></div>`;
+  if (isSevere) html += `<div class="alert-box">⚠️ <div><strong>Severe allergy.</strong> If reaction occurs: use EpiPen immediately, call 999, then call parents. Do not wait for symptoms to worsen.</div></div>`;
+  const rows = [["Allergen", p.allergen], ["EpiPen", p.epipen], ["Symptoms", p.symptoms], ["Note", p.note], ["Parent/carer", p.parent]];
+  rows.forEach(([l,v]) => { html += `<div class="modal-row"><span class="modal-label">${l}</span><span class="modal-val">${v}</span></div>`; });
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openSocialModal(p) {
+  document.getElementById('modal-title').textContent = p.name;
+  let html = `<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">${photoOrInitials(p.name, p.photo)}<div><div style="font-size:15px;font-weight:600;">${p.name}</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${p.year} · ${p.cls}</div><span class="child-badge badge-social" style="display:inline-block;margin-top:6px;margin-left:0;">Restricted</span></div></div>`;
+  const rows = [["Restriction", p.restriction], ["Reason", p.reason], ["Note", p.note], ["If unsure", p.contact]];
+  rows.forEach(([l,v]) => { html += `<div class="modal-row"><span class="modal-label">${l}</span><span class="modal-val">${v}</span></div>`; });
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalOutside(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function filterEvents(tag, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.event-card').forEach(card => {
+    const tags = (card.dataset.tags || '').toLowerCase();
+    card.style.display = (tag === 'all' || tags.includes(tag)) ? '' : 'none';
+  });
+}
+
+let currentWeekOffset = 0;
+function changeWeek(dir) {
+  currentWeekOffset += dir;
+  document.getElementById('week-label').textContent = currentWeekOffset === 0 ? FALLBACK_WEEK.label : 'Week ' + (3 + currentWeekOffset) + ' (Sheet data when connected)';
+  if (currentWeekOffset === 0) renderFallback();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SAFEGUARDING PIN
+// ═══════════════════════════════════════════════════════════
+let pinEntry = '';
+function enterPin(n) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += String(n);
+  updateDots();
+  if (pinEntry.length === 4) setTimeout(checkPin, 180);
+}
+function updateDots() {
+  for (let i = 0; i < 4; i++) document.getElementById('d' + i).classList.toggle('filled', i < pinEntry.length);
+}
+function clearPin() { pinEntry = ''; updateDots(); document.getElementById('pin-error').textContent = ''; }
+function backspacePin() { pinEntry = pinEntry.slice(0, -1); updateDots(); }
+function checkPin() {
+  if (pinEntry === CORRECT_PIN) {
+    document.getElementById('pin-gate-wrapper').classList.add('hidden');
+    document.getElementById('sg-content-wrapper').classList.remove('hidden');
+  } else {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN — please try again.';
+    pinEntry = ''; updateDots();
+  }
+}
+function lockSafeguarding() {
+  document.getElementById('pin-gate-wrapper').classList.remove('hidden');
+  document.getElementById('sg-content-wrapper').classList.add('hidden');
+  pinEntry = ''; updateDots();
+  document.getElementById('pin-error').textContent = '';
+}
+function showSgTab(id, btn) {
+  document.querySelectorAll('.sg-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sg-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('sg-' + id).classList.add('active');
+}
+
+// Keyboard support for PIN
+document.addEventListener('keydown', e => {
+  if (document.getElementById('section-safeguarding').classList.contains('active') &&
+      document.getElementById('pin-gate-wrapper') &&
+      !document.getElementById('pin-gate-wrapper').classList.contains('hidden')) {
+    if (e.key >= '0' && e.key <= '9') enterPin(parseInt(e.key));
+    if (e.key === 'Backspace') backspacePin();
+    if (e.key === 'Escape') clearPin();
+  }
+  if (e.key === 'Escape') closeModal();
+});
+</script>
+
+</body>
+</html>
