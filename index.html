@@ -364,7 +364,7 @@
 // ═══════════════════════════════════════════════════════════
 
 // Paste your published Google Sheet CSV URL here:
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVaXuWlq4A74-H3cE49eqcLDgWUH9C1R1bj55n2xOA78i2NO4x76oanvtxzH1ekA/pub?output=csv";
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbyrPawkeY07n1WHBzxYnunLCxdGHC_Y9DkQV8rtzR0iuy4bjIL1wfPVhSwiGSdQzwQ/exec";
 
 // Safeguarding PIN (change this!):
 const CORRECT_PIN = "1234";
@@ -491,23 +491,76 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════
 async function loadSheetData() {
   try {
+    const res = await fetch(SHEET_URL);
+    const data = await res.json();
     const today = new Date().toLocaleDateString('en-GB');
-    const res = await fetch("https://corsproxy.io/?" + encodeURIComponent(SHEET_URL));
-    const csv = await res.text();
-    const rows = parseCSV(csv);
-    // Filter to today's rows; column 0 = date
-    const todayRows = rows.filter(r => r[0] === today);
-    if (todayRows.length === 0) {
-      renderFallback();
-      document.getElementById('last-updated').textContent = 'Sheet connected · No events today';
+
+    const todayEvents = (data.Events || []).slice(1).filter(r => r[0] === today);
+    const todayCover = (data.Cover || []).slice(1).filter(r => r[0] === today);
+    const weekEvents = (data.WeekEvents || []).slice(1);
+
+    if (todayEvents.length > 0) {
+      renderSheetEvents(todayEvents);
     } else {
-      renderSheetEvents(todayRows);
-      document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+      renderFallbackEvents();
     }
+
+    if (todayCover.length > 0) {
+      renderSheetCover(todayCover);
+    } else {
+      document.getElementById('cover-list').innerHTML = '<div class="sheet-status">No cover arrangements today.</div>';
+    }
+
+    renderSheetWeek(weekEvents);
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+
   } catch(e) {
+    console.error(e);
     renderFallback();
-    document.getElementById('last-updated').textContent = 'Sheet unavailable — showing defaults';
+    document.getElementById('last-updated').textContent = 'Could not load sheet — showing defaults';
   }
+}
+
+  function renderSheetCover(rows) {
+  const coverList = document.getElementById('cover-list');
+  coverList.innerHTML = '';
+  if (rows.length === 0) {
+    coverList.innerHTML = '<div class="sheet-status">No cover arrangements today.</div>';
+    return;
+  }
+  rows.forEach(r => {
+    const name = r[1] || '';
+    const periods = r[2] || '';
+    const cover = r[3] || '';
+    const notes = r[4] || '';
+    const initials = name.split(' ').map(w => w[0]).join('').slice(0,2);
+    const row = document.createElement('div');
+    row.className = 'cover-row';
+    row.innerHTML = `<div class="cover-avatar">${initials}</div><div><div class="cover-name">${name}</div><div class="cover-detail">${periods} — Cover: ${cover}${notes ? ' · ' + notes : ''}</div></div><div class="cover-badge">Absent</div>`;
+    coverList.appendChild(row);
+  });
+}
+
+function renderSheetWeek(rows) {
+  const wg = document.getElementById('week-grid');
+  wg.innerHTML = '';
+  const days = {};
+  const today = new Date().toLocaleDateString('en-GB');
+  rows.forEach(r => {
+    const date = r[0]; const label = r[1]; const event = r[2];
+    if (!date || !label) return;
+    if (!days[date]) days[date] = { label, events: [], isToday: date === today };
+    days[date].events.push(event);
+  });
+  if (Object.keys(days).length === 0) { renderFallback(); return; }
+  Object.values(days).forEach(d => {
+    const col = document.createElement('div');
+    col.className = 'day-col' + (d.isToday ? ' today' : '');
+    col.innerHTML = `<div class="day-name">${d.label}${d.isToday ? ' ← today' : ''}</div>` +
+      d.events.map(e => `<div class="day-event">${e}</div>`).join('');
+    wg.appendChild(col);
+  });
+  document.getElementById('week-label').textContent = 'This week';
 }
 
 function parseCSV(text) {
