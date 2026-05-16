@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadSheetData() {
   try {
     const today = new Date().toLocaleDateString('en-GB');
-    const res = await fetch(SHEET_URL);
+    const res = await fetch("https://corsproxy.io/?" + encodeURIComponent(SHEET_URL));
     const csv = await res.text();
     const rows = parseCSV(csv);
     // Filter to today's rows; column 0 = date
